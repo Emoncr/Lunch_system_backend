@@ -1,0 +1,169 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  SELLER
+  ADMIN
+}
+
+model User {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  name       String
+  email      String @unique
+  password   String
+  otp        String @default("000000")
+  role       Role   @default(USER)
+  profileImg String @default("https://res.cloudinary.com/du6ditswt/image/upload/v1713274552/z2k7et50bwwicdre85nl.png")
+
+  sellerId Seller?
+
+  Coustomer Coustomer?
+  createdAt DateTime   @default(now()) @db.Timestamp()
+  updatedAt DateTime   @default(now()) @updatedAt @db.Timestamp()
+}
+
+model Coustomer {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  buyerName String
+  address   String
+  country   String
+  city      String
+  state     String
+  zip       String
+  firstName String
+  lastName  String
+  phone     String
+
+  purchaseProductIds String[]  @db.ObjectId
+  products           Product[] @relation(fields: [purchaseProductIds], references: [id])
+
+  userId String @unique @db.ObjectId
+  User   User   @relation(fields: [userId], references: [id])
+
+  orderIds Order[] // ONE TO MANY REALTION WITH ORDER
+
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp()
+}
+
+model Product {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  title      String
+  shortDesc  String
+  longDesc   String
+  price      Int
+  images     String[]
+  tags       String[]
+  stocks     Int
+  type       String
+  life       String
+  discount   Int
+  isDiscount Boolean  @default(false)
+
+  ratings Rating[] // ONE TO MANY REALTION WITH RATING 
+
+  sellerId String @db.ObjectId
+  Seller   Seller @relation(fields: [sellerId], references: [id]) // ONE TO MANY REALTION WITH SELLER
+
+  category   Category @relation(fields: [categoryId], references: [id]) // ONE TO MANY REALTION WITH CATEGORY
+  categoryId String   @db.ObjectId
+
+  customarIds String[]    @db.ObjectId
+  coustomers  Coustomer[] @relation(fields: [customarIds], references: [id]) // Many TO MANY REALTION WITH COUSTOMER
+
+  orderIds String[] @db.ObjectId // ONE TO MANY REALTION WITH ORDER
+  orders   Order[]  @relation(fields: [orderIds], references: [id]) // Many TO MANY REALTION WITH 
+
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp()
+}
+
+model Category {
+  id           String  @id @default(auto()) @map("_id") @db.ObjectId
+  categoryName String
+  categoryDesc String?
+  categoryImg  String?
+
+  products Product[] // ONE TO MANY REALTION WITH PRODUCT
+
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp()
+}
+
+model Seller {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  brandName String
+  brandDesc String
+  brandLogo String
+  address   String
+  phone     String
+
+  userId String @unique @db.ObjectId
+  User   User   @relation(fields: [userId], references: [id])
+
+  products Product[] // ONE TO MANY REALTION WITH PRODUCT
+
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp()
+}
+
+model Rating {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  count    Int
+  star     Int     @default(0)
+  comments String?
+
+  productId String  @unique @db.ObjectId
+  Product   Product @relation(fields: [productId], references: [id]) // ONE TO MANY REALTION WITH PRODUCT 
+
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp()
+}
+
+model Subscriber {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp()
+}
+
+model Contact {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp()
+}
+
+model Order {
+  id     String @id @default(auto()) @map("_id") @db.ObjectId
+  status String
+  total  Int
+
+  productId String[]  @unique @db.ObjectId
+  Product   Product[] @relation(fields: [productId], references: [id]) // ONE TO MANY REALTION WITH PRODUCT
+
+  customarId String    @unique @db.ObjectId
+  Coustomers Coustomer @relation(fields: [customarId], references: [id]) // ONE TO MANY REALTION WITH COUSTOMER
+
+  createdAt DateTime @default(now()) @db.Timestamp()
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamp()
+}
